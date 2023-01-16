@@ -58,6 +58,7 @@ def callback(request):
         return HttpResponseBadRequest()
 
 def get_weather(address):
+    address = address.replace('台','臺')
     area_list, area_avg_list,city_list = {}, {}, {}
     msg = "查無天氣資料"
     def get_data():
@@ -106,6 +107,7 @@ def get_weather(address):
         return msg
 
 def get__AQI(address):
+    address = address.replace('台','臺')
     city_list, site_list = {}, {}
     msg = "查無空氣品質資料"
     def get_data():
@@ -127,9 +129,11 @@ def get__AQI(address):
         for i in city_list:
             if i in address:
                 aqi_avg = 0.0
+                n = 0
                 for k in city_list[i]:
                     aqi_avg += int(k)
-                aqi_avg = round(aqi_avg,0)
+                    n += 1
+                aqi_avg = int(round(aqi_avg/n,0))
                 
                 aqi_status = ''
                 if aqi_avg<=50: aqi_status = "良好"
