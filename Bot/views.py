@@ -61,7 +61,7 @@ def get_weather(address):
     area_list, area_avg_list,city_list = {}, {}, {}
     msg = "查無天氣資料"
     def get_data():
-        url = f'https://opendata.cwb.gov.tw/fileapi/v1/opendataapi/O-A0001-001?Authorization=CWB-82D657F9-72A7-4A96-A0E1-88A7B340315E&downloadType=WEB&format=JSON'
+        url = 'https://opendata.cwb.gov.tw/fileapi/v1/opendataapi/O-A0001-001?Authorization=CWB-82D657F9-72A7-4A96-A0E1-88A7B340315E&downloadType=WEB&format=JSON'
         data = requests.get(url)
         data_json = data.json()
         location = data_json['cwbopendata']['location']
@@ -76,9 +76,9 @@ def get_weather(address):
                 area_list[area] = {'temp':temp, 'humd':humd, 'r24':r24}
             if city not in city_list:
                 city_list[city] = {'temp':[], 'humd':[], 'r24':[]}
-            city_list[city]['temp'].append(temp)
-            city_list[city]['humd'].append(humd)
-            city_list[city]['r24'].append(r24)
+            city_list[city]['temp'].append(float(temp))
+            city_list[city]['humd'].append(float(humd))
+            city_list[city]['r24'].append(float(r24))
 
     def get_msg(loc,msg):
         ret = msg
@@ -99,7 +99,7 @@ def get_weather(address):
                                     'humd':round(statistics.mean(city_list[i]['humd']),1),
                                     'r24':round(statistics.mean(city_list[i]['r24']),1)}
                                    
-        msg = get_msg(area_avg_list,msg)  
+        #msg = get_msg(area_avg_list,msg)  
         msg = get_msg(area_list,msg)
         return msg
     except:
