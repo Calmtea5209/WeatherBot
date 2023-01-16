@@ -33,6 +33,9 @@ def callback(request):
                     if '雷達' in mtext:
                         message=ImageSendMessage(original_content_url='https://cwbopendata.s3.ap-northeast-1.amazonaws.com/MSC/O-A0058-001.png', preview_image_url='https://cwbopendata.s3.ap-northeast-1.amazonaws.com/MSC/O-A0058-001.png')
                         line_bot_api.reply_message(event.reply_token,message)
+                    elif '地震' in mtext:
+                        message = earth_quake()
+                        line_bot_api.reply_message(event.reply_token,message)
                     else:
                         message=TextSendMessage(text=mtext)
                         line_bot_api.reply_message(event.reply_token,message)
@@ -105,7 +108,6 @@ def get__AQI(address):
             status = i['status']
             site_list[site] = {'aqi':aqi, 'status':status}
             city_list[city].append(aqi)
-        print("T")
     
     try:
         get_data()
@@ -131,5 +133,27 @@ def get__AQI(address):
                 break
 
         return msg
+    except:
+        return msg
+
+def earth_quake():
+    msg = "查無地震資料"
+    def get_data():
+        url = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/E-A0016-001?Authorization=rdec-key-123-45678-011121314'
+        data = requests.get(url)
+        data_json = data.json()
+        eq = data_json['records']['Earthquake']
+        for i in eq:
+            loc = i['EarthquakeInfo']['Epicenter']['Location']                  #地點
+            val = i['EarthquakeInfo']['EarthquakeMagnitude']['MagnitudeValue']  #規模
+            dep = i['EarthquakeInfo']['FocalDepth']                             #深度
+            eq_time = i['EarthquakeInfo']['OriginTime']                         #時間
+            img_url = i['ReportImageURI']                                       #報告
+            msg = TextSendMessage(text=f'{loc}\n\n芮氏規模 {val} 級\n深度 {dep} 公里\n發生時間 {eq_time}')
+            img = ImageSendMessage(original_content_url=img_url, preview_image_url=img_url)
+            return [msg,img]
+
+    try:
+        return get_data()
     except:
         return msg
