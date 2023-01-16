@@ -58,7 +58,7 @@ def callback(request):
         return HttpResponseBadRequest()
 
 def get_weather(address):
-    area_list= {}
+    area_list, area_avg_list,city_list = {}, {}, {}
     msg = "查無天氣資料"
     def get_data():
         url = f'https://opendata.cwb.gov.tw/fileapi/v1/opendataapi/O-A0001-001?Authorization=CWB-82D657F9-72A7-4A96-A0E1-88A7B340315E&downloadType=WEB&format=JSON'
@@ -67,17 +67,23 @@ def get_weather(address):
         location = data_json['cwbopendata']['location']
         for i in location:
             name = i['locationName']                                                      #測站
+            city = i['parameter'][0]['parameterValue']                                    #縣市
             area = i['parameter'][2]['parameterValue']                                    #行政區
             temp = i['weatherElement'][3]['elementValue']['value']                        #氣溫
             humd = round(float(i['weatherElement'][4]['elementValue']['value'] )*100 ,1)  #相對濕度
             r24 = i['weatherElement'][6]['elementValue']['value']                         #累積雨量
             if area not in area_list:
-                area_list[area] = {'name':name, 'temp':temp, 'humd':humd, 'r24':r24} 
+                area_list[area] = {'temp':temp, 'humd':humd, 'r24':r24}
+            if city not in city_list:
+                city_list[city] = {'temp':[], 'humd':[], 'r24':[]}
+            city_list[city]['temp'].append(temp)
+            city_list[city]['humd'].append(humd)
+            city_list[city]['r24'].append(r24)
 
-    def get_msg(msg):
+    def get_msg(loc,msg):
         ret = msg
-        for i in area_list:
-            if i in address:  #檢查地址裡有否行政區的名子
+        for i in loc:
+            if i in address:  #檢查地址裡有否區域的名子
                 temp = f"氣溫 : {area_list[i]['temp']} 度" 
                 humd = f"相對濕度 : {area_list[i]['humd']}%" 
                 r24 = f"累積雨量 : {area_list[i]['r24']}mm" 
@@ -87,7 +93,14 @@ def get_weather(address):
     
     try:
         get_data()
-        msg = get_msg(msg)   
+        for i in city_list:
+            if i not in area_avg_list: # 若找不到行政區，則使用平均值
+                area_avg_list[i] = {'temp':round(statistics.mean(city_list[i]['temp']),1),
+                                    'humd':round(statistics.mean(city_list[i]['humd']),1),
+                                    'r24':round(statistics.mean(city_list[i]['r24']),1)}
+                                   
+        msg = get_msg(area_avg_list,msg)  
+        msg = get_msg(area_list,msg)
         return msg
     except:
         return msg
